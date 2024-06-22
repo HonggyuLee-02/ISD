@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Customer Total Price Search</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Customer Total Price Search</h2>
+            <form id="search-form">
+                <div class="form-group">
+                    <label for="customer_id">Customer ID:</label>
+                    <input type="number" class="form-control" id="customer_id" name="customer_id" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+            <div id="result" style="margin-top: 20px">
+                <!-- 결과가 여기에 표시됩니다 -->
+            </div>
+        </div>
+
+        <script>
+            $(document).ready(function () {
+                $('#search-form').on('submit', function (event) {
+                    event.preventDefault();
+                    const customer_id = $('#customer_id').val();
+
+                    $.ajax({
+                        url: `http://127.0.0.1:7000/totalprice/`,
+                        type: 'GET',
+                        data: { customer_id: customer_id },
+                        success: function (response) {
+                            $('#result').html(`<h3>Total Price: ${response[0].총가격}</h3>`);
+                        },
+                        error: function (xhr) {
+                            $('#result').html(`<h3>Error: ${xhr.responseJSON.detail}</h3>`);
+                        },
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
