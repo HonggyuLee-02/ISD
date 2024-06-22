@@ -14,20 +14,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 row.appendChild(gradeCell);
 
                 const stockCell = document.createElement('td');
-                stockCell.textContent = value; // 재고량
+                stockCell.textContent = value['수량'] + '개'; // 재고량
                 row.appendChild(stockCell);
 
+                const priceCell = document.createElement('td');
+                priceCell.textContent = value['단가'] + '원'; // 가격
+                row.appendChild(priceCell);
+
                 const quantityCell = document.createElement('td');
-                const form = document.createElement('form');
-                form.method = 'post';
-                form.action = '/orderInfo';
 
                 const select = document.createElement('select');
-                select.name = 'quantity';
+                select.name = `quantity_${key}`; // 각 등급별로 구분된 이름을 가짐
                 select.className = 'form-control';
 
                 // 드롭다운 메뉴에 수량 옵션 추가 (1부터 재고량까지)
-                for (let i = 1; i <= parseInt(value); i++) {
+                for (let i = 1; i <= parseInt(value['수량']); i++) {
                     const option = document.createElement('option');
                     option.value = i;
                     option.textContent = i;
@@ -36,23 +37,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const gradeInput = document.createElement('input');
                 gradeInput.type = 'hidden';
-                gradeInput.name = 'grade';
+                gradeInput.name = `grade_${key}`;
                 gradeInput.value = key;
 
-                form.appendChild(select);
-                form.appendChild(gradeInput);
-                quantityCell.appendChild(form);
+                quantityCell.appendChild(select);
+                quantityCell.appendChild(gradeInput);
                 row.appendChild(quantityCell);
-
-                const actionCell = document.createElement('td');
-                const button = document.createElement('button');
-                button.textContent = '구매하기';
-                button.className = 'btn btn-primary';
-                button.type = 'submit';
-                form.appendChild(button);
-
-                actionCell.appendChild(form);
-                row.appendChild(actionCell);
 
                 tableBody.appendChild(row);
             });

@@ -13,22 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 data.forEach((item) => {
                     const row = document.createElement('tr');
 
-                    const numCell = document.createElement('td');
-                    numCell.textContent = item.귤_id;
-                    row.appendChild(numCell);
-
-                    const nameCell = document.createElement('td');
-                    nameCell.textContent = item.당도;
-                    row.appendChild(nameCell);
-
-                    const gradeCell = document.createElement('td');
-                    gradeCell.textContent = item.무게;
-                    row.appendChild(gradeCell);
-
-                    const scoreCell = document.createElement('td');
-                    scoreCell.textContent = item.착색비율;
-                    row.appendChild(scoreCell);
-
                     const addressCell = document.createElement('td');
                     addressCell.textContent = item.등급;
                     row.appendChild(addressCell);
