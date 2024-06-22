@@ -1,34 +1,50 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주문 내역 조회</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <header>
-        <h1>주문 내역 조회</h1>
-    </header>
-    <main>
-        <section>
-            <h2>주문 내역</h2>
-            <form id="order-history-form">
-                <label for="customer-id">고객 ID:</label>
-                <input type="number" id="customer-id" name="customer-id" required>
-                <button type="submit">조회</button>
-            </form>
-            <div id="order-history-results">
-                <!-- 주문 내역이 여기에 표시됩니다. -->
-            </div>
-            <div id="total-order-amount">
-                <!-- 총 주문 금액이 여기에 표시됩니다. -->
-            </div>
-        </section>
-    </main>
-    <footer>
-        <p>저작권 © 2024 귤 판매자</p>
-    </footer>
-    <script src="order_history.js"></script>
-</body>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Order History</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+        <link rel="stylesheet" type="text/css" href="/static/css/styles.css" />
+        <style>
+            table {
+                width: 50%;
+                border-collapse: collapse;
+                margin: 25px 0;
+                font-size: 18px;
+                text-align: left;
+            }
+            th,
+            td {
+                padding: 12px;
+                border: 1px solid #ddd;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="mt-5">Order History</h1>
+            <button id="load-button" class="btn btn-primary">Load Data</button>
+            <table class="table" id="data-table" style="display: none">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">주문번호</th>
+                        <th scope="col">구매수량</th>
+                        <th scope="col">처리상태</th>
+                        <th scope="col">귤 등급</th>
+                        <th scope="col">고객 ID</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script src="/static/js/scripts_order_history.js"></script>
+    </body>
 </html>

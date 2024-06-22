@@ -26,14 +26,21 @@ async def home(request: Request):
 async def home(request: Request):
     return templates.TemplateResponse("order.html",{"request":request})
 
+@app.get("/order_history/")
+async def home(request: Request):
+    return templates.TemplateResponse("order_history.html",{"request":request})
+
+@app.get("/orderlist/")
+async def home(request: Request):
+    return templates.TemplateResponse("order_history.html",{"request":request})
 
 @app.get("/insert/")
 async def home(request: Request):
     return templates.TemplateResponse("insert.html",{"request":request})
 
-@app.get("/items/")
-async def read_item(skip: int = 0, limit: int = 10):
-    return fake_items_db[skip : skip + limit]
+@app.get("/totalPriceSearch/")
+async def home(request: Request):
+    return templates.TemplateResponse("totalPriceSearch.html",{"request":request})
 
 import pymysql
 
@@ -58,17 +65,30 @@ def get_mandarine_by_id():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/insert_info/")
-def insert_info( 당도:str, 무게:str, 착색비율:str, 수량:str):
+def insert_info(당도: str, 무게: str, 착색비율: str, 수량: str):
     try:
-        sql = "INSERT INTO 귤 (등급, 단가, 수량 ) VALUES (%s, %s, %s)"
-        등급 = classify_fruit(당도,무게,착색비율)
+        등급 = classify_fruit(당도, 무게, 착색비율)
         단가 = 단가_책정(등급)
-        cur.execute(sql, (등급, 단가, 수량))
+        
+        # 등급이 이미 존재하는지 확인
+        cur.execute("SELECT 수량 FROM 귤 WHERE 등급 = %s", (등급,))
+        result = cur.fetchone()
+        
+        if result:
+            # 등급이 존재하면 수량을 업데이트
+            새로운_수량 = int(result['수량']) + int(수량)
+            cur.execute("UPDATE 귤 SET 수량 = %s WHERE 등급 = %s", (새로운_수량, 등급))
+        else:
+            # 등급이 존재하지 않으면 새로운 행을 삽입
+            sql = "INSERT INTO 귤 (등급, 단가, 수량) VALUES (%s, %s, %s)"
+            cur.execute(sql, (등급, 단가, 수량))
+        
         conn.commit()
         return RedirectResponse(url="/search", status_code=303)
     except Exception as e:
+        conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-    
+        
 @app.get("/mandarineSortedInfo/")
 def get_mandarine_info():
     try:
@@ -126,6 +146,59 @@ async def order_info(request: Request):
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/orderlistInfo/")
+def get_mandarine_by_id():
+    try:
+        sql = "SELECT * FROM 주문"
+        cur.execute(sql)
+        row = cur.fetchall()
+        conn.commit()  # 커밋을 통해 변경 사항을 반영합니다.
+        print(row)  # 디버깅용 출력
+        if not row:
+            raise HTTPException(status_code=404, detail="No data found")
+        return row
+    except Exception as e:
+        print(f"Error: {e}")
+        conn.rollback()  # 에러 발생 시 롤백합니다.
+        raise HTTPException(status_code=500, detail=str(e))
+    
+### 고객별 총액 조회 ###(totalprice)
+# 고객 ID 입력 시, 처리상태 = " 미처리" 인 상품들의 단가 총합을 표시
+@app.get("/totalprice/")
+def get_customer_total_price(customer_id: int):
+    try:
+        sql = """
+        SELECT 고객.고객_id, SUM(귤.단가 * 주문.구매수량) AS 총가격
+        FROM 주문
+        JOIN 고객 ON 주문.고객_고객_id = 고객.고객_id
+        JOIN 귤 ON 주문.귤_등급 = 귤.등급
+        WHERE 고객.고객_id = %s AND 주문.처리상태 = '미처리'
+        GROUP BY 고객.고객_id
+        """
+        cur.execute(sql, (customer_id,))
+        row = cur.fetchall()
+        conn.commit()
+        if not row:
+            raise HTTPException(status_code=404, detail="No data found")
+        return row
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/order_historyInfo/")
+def get_order_history():
+    try:
+        sql = "SELECT * FROM 주문"
+        cur.execute(sql)
+        rows = cur.fetchall()
+        conn.commit()  # 커밋을 통해 변경 사항을 반영합니다.
+        if not rows:
+            raise HTTPException(status_code=404, detail="No data found")
+        return rows
+    except Exception as e:
+        conn.rollback()  # 에러 발생 시 롤백합니다.
+        raise HTTPException(status_code=500, detail=str(e))
+    
 def classify_fruit(당도, 무게, 착색비율):
     당도 = int(당도)
     무게 = int(무게)
