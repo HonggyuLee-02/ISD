@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Form
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 
 from fastapi.staticfiles import StaticFiles
 
@@ -57,12 +58,12 @@ def get_mandarine_by_id():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/insert_info/")
-def insert_info(귤_id:str, 당도:str, 무게:str, 착색비율:str, 수량:str):
+def insert_info( 당도:str, 무게:str, 착색비율:str, 수량:str):
     try:
-        sql = "INSERT INTO 귤 (귤_id, 당도, 무게, 착색비율, 등급, 단가, 수량 ) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO 귤 (등급, 단가, 수량 ) VALUES (%s, %s, %s)"
         등급 = classify_fruit(당도,무게,착색비율)
         단가 = 단가_책정(등급)
-        cur.execute(sql, (귤_id, 당도, 무게, 착색비율, 등급, 단가, 수량))
+        cur.execute(sql, (등급, 단가, 수량))
         conn.commit()
         return RedirectResponse(url="/search", status_code=303)
     except Exception as e:
@@ -71,11 +72,11 @@ def insert_info(귤_id:str, 당도:str, 무게:str, 착색비율:str, 수량:str
 @app.get("/mandarineSortedInfo/")
 def get_mandarine_info():
     try:
-        # 등급별로 수량의 합을 계산하는 쿼리
+         # 등급별로 수량의 합을 계산하는 쿼리
         sql = """
-        SELECT 등급, SUM(수량) AS 총수량 
+        SELECT 등급, SUM(수량) AS 총수량, 단가 
         FROM 귤
-        GROUP BY 등급
+        GROUP BY 등급, 단가
         """
         cur.execute(sql)
         rows = cur.fetchall()
@@ -83,7 +84,7 @@ def get_mandarine_info():
             raise HTTPException(status_code=404, detail="No data found")
         
         # 결과를 JSON 형식으로 변환
-        result = {row['등급']: f"{row['총수량']}개" for row in rows}
+        result = {row['등급']: {"수량": row['총수량'], "단가": row['단가']} for row in rows}
         
         return result
     except Exception as e:
@@ -91,6 +92,39 @@ def get_mandarine_info():
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
+# 주문 데이터 모델 정의
+class Order(BaseModel):
+    customer_id: int
+    orders: dict
+
+@app.post("/orderInfo/")
+async def order_info(request: Request):
+    form_data = await request.form()
+    customer_id = form_data.get("customer_id")
+    
+    try:
+        for key, value in form_data.items():
+            if key.startswith("quantity_"):
+                grade = key.split("_")[1]
+                quantity = int(value)
+
+                # 귤 테이블에서 해당 등급의 수량 업데이트
+                cur.execute("UPDATE 귤 SET 수량 = 수량 - %s WHERE 등급 = %s AND 수량 >= %s", (quantity, grade, quantity))
+                if cur.rowcount == 0:
+                    raise HTTPException(status_code=400, detail=f"Not enough stock for grade {grade}")
+
+                # 주문 테이블에 데이터 추가
+                sql = """
+                INSERT INTO 주문 (구매수량, 처리상태, 귤_등급, 고객_고객_id)
+                VALUES (%s, '미처리', %s, %s)
+                """
+                cur.execute(sql, (quantity, grade, customer_id))
+        
+        conn.commit()
+        return {"message": "Order successfully placed"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 def classify_fruit(당도, 무게, 착색비율):
     당도 = int(당도)
