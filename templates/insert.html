@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Order Form</title>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+    </head>
+    <body>
+        <div class="container">
+            <h2 class="text-center">귤 정보 입력</h2>
+            <form action="/insert_info/" method="GET" class="form-horizontal">
+                <div class="form-group">
+                    <label for="귤_id" class="col-sm-2 control-label">귤 ID</label>
+                    <div class="col-sm-10">
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="귤_id"
+                            name="귤_id"
+                            placeholder="귤 ID 입력하세요"
+                        />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="당도" class="col-sm-2 control-label">당도</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="당도" name="당도" placeholder="당도를 입력하세요" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="무게" class="col-sm-2 control-label">무게</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="무게" name="무게" placeholder="무게를 입력하세요" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="착색비율" class="col-sm-2 control-label">착색비율</label>
+                    <div class="col-sm-10">
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="착색비율"
+                            name="착색비율"
+                            placeholder="착색비율을 입력하세요"
+                        />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="수량" class="col-sm-2 control-label">수량</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="수량" name="수량" placeholder="수량을 입력하세요" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </body>
+</html>

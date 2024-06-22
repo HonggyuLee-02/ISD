@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>JSON to HTML Table</title>
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+        <link rel="stylesheet" type="text/css" href="/static/css/styles.css" />
+
+        <style>
+            table {
+                width: 50%;
+                border-collapse: collapse;
+                margin: 25px 0;
+                font-size: 18px;
+                text-align: left;
+            }
+            th,
+            td {
+                padding: 12px;
+                border: 1px solid #ddd;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="mt-5">귤 특성 조회</h1>
+            <button id="load-button" class="btn btn-primary">Load Data</button>
+            <table class="table" id="data-table" style="display: none">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">귤_id</th>
+                        <th scope="col">당도</th>
+                        <th scope="col">무게</th>
+                        <th scope="col">착색비율</th>
+                        <th scope="col">등급</th>
+                        <th scope="col">단가</th>
+                        <th scope="col">수량</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script src="/static/js/scripts.js"></script>
+    </body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>귤 판매 시스템</title>
+        <style>
+            .body-container,
+            nav {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+            }
+
+            a {
+                background-color: antiquewhite;
+                text-decoration: none;
+                font-weight: bold;
+                margin: 10px;
+            }
+            a:visited {
+                background-color: antiquewhite;
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: none; /* 밑줄 제거 */
+                color: blue; /* 마우스 오버 시 색상 변경 (필요 시) */
+            }
+
+            /* 포커스된 링크 스타일 */
+            a:focus {
+                text-decoration: none; /* 밑줄 제거 */
+                color: blue; /* 부모 요소의 색상을 상속 */
+            }
+        </style>
+    </head>
+    <body>
+        <div class="body-container">
+            <h1>귤 판매 시스템</h1>
+            <nav>
+                <a href="/insert">귤 정보 입력하기</a>
+                <a href="/search">귤 조회하기</a>
+            </nav>
+        </div>
+    </body>
+</html>
