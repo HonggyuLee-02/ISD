@@ -6,7 +6,6 @@
         <title>주문페이지</title>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
         <link rel="stylesheet" type="text/css" href="/static/css/styles.css" />
-
         <style>
             table {
                 width: 70%;
@@ -45,9 +44,58 @@
             </table>
             <button type="submit" class="btn btn-primary">구매하기</button>
         </form>
+
+        <!-- Modal -->
+        <div
+            class="modal fade"
+            id="errorModal"
+            tabindex="-1"
+            role="dialog"
+            aria-labelledby="errorModalLabel"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">적어도 하나의 품목은 1 이상의 수량을 선택해야 합니다.</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
         <script src="/static/js/scripts_order.js"></script>
+
+        <script>
+            document.getElementById('order-form').addEventListener('submit', function (event) {
+                const selects = document.querySelectorAll('select');
+                let valid = false;
+                selects.forEach((select) => {
+                    if (select.value > 0) {
+                        valid = true;
+                    } else {
+                        select.parentElement.querySelector('input').disabled = true;
+                        select.disabled = true;
+                    }
+                });
+                if (!valid) {
+                    event.preventDefault();
+                    $('#errorModal').modal('show');
+                    selects.forEach((select) => {
+                        select.disabled = false;
+                        select.parentElement.querySelector('input').disabled = false;
+                    });
+                }
+            });
+        </script>
     </body>
 </html>

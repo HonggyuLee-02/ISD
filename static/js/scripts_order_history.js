@@ -33,6 +33,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     customerIdCell.textContent = item.고객_고객_id;
                     row.appendChild(customerIdCell);
 
+                    const wrapIdCell = document.createElement('td');
+                    wrapIdCell.textContent = item.포장_포장번호;
+                    row.appendChild(wrapIdCell);
+
                     tableBody.appendChild(row);
                 });
 
