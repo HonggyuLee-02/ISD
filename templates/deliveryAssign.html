@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>포장 배정</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    </head>
+    <body>
+        <div class="container mt-5">
+            <h1>포장 배정</h1>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>포장번호</th>
+                        <th>배송기사 ID</th>
+                    </tr>
+                </thead>
+                <tbody id="packaging-table-body">
+                    <!-- 데이터가 여기에 삽입됩니다. -->
+                </tbody>
+            </table>
+            <button class="btn btn-primary" id="assign-button">배정</button>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                fetch('http://127.0.0.1:7000/packagingInfo/')
+                    .then((response) => response.json())
+                    .then((data) => {
+                        const tableBody = document.getElementById('packaging-table-body');
+                        tableBody.innerHTML = '';
+                        if (Array.isArray(data)) {
+                            data.forEach((item) => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                <td>${item.포장번호}</td>
+                                <td>미배정</td>
+                            `;
+                                tableBody.appendChild(row);
+                            });
+                        } else {
+                            console.error('Expected data to be an array:', data);
+                        }
+                    })
+                    .catch((error) => console.error('Error fetching data:', error));
+
+                document.getElementById('assign-button').addEventListener('click', function () {
+                    fetch('http://127.0.0.1:7000/assignDelivery/', {
+                        method: 'POST',
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            console.log('Assignment data:', data); // 디버깅 출력
+                            let message = `배정 완료: ${data.message}\n`;
+                            data.assignments.forEach((assignment) => {
+                                message += `포장번호: ${assignment.package_id}, 배송기사 ID: ${assignment.driver_id}\n`;
+                            });
+                            alert(message);
+                            window.location.reload();
+                        })
+                        .catch((error) => console.error('Error assigning deliveries:', error));
+                });
+            });
+        </script>
+    </body>
+</html>

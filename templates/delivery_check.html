@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>배송 조회</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="mt-5">배송 조회</h1>
+            <form id="delivery-form">
+                <div class="form-group">
+                    <label for="delivery-id">배송기사 ID:</label>
+                    <input type="text" id="delivery-id" name="delivery_id" class="form-control" required />
+                </div>
+                <button type="submit" class="btn btn-primary">조회</button>
+            </form>
+            <div id="delivery-result" class="mt-5" style="display: none">
+                <h2>배송 결과</h2>
+                <p>기사 이름: <span id="delivery-person-name"></span></p>
+                <p>전화번호: <span id="delivery-person-phone"></span></p>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>포장번호</th>
+                            <th>주문번호</th>
+                            <th>고객 ID</th>
+                            <th>구매 수량</th>
+                            <th>처리 상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+        <script>
+            document.getElementById('delivery-form').addEventListener('submit', function (event) {
+                event.preventDefault();
+                const deliveryId = document.getElementById('delivery-id').value;
+                fetch('/delivery_result/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({ delivery_id: deliveryId }),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.delivery_info && data.delivery_orders) {
+                            document.getElementById('delivery-person-name').textContent = data.delivery_info.기사이름;
+                            document.getElementById('delivery-person-phone').textContent = data.delivery_info.전화번호;
+                            const ordersTableBody = document.getElementById('orders-table-body');
+                            ordersTableBody.innerHTML = '';
+                            data.delivery_orders.forEach((order) => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                            <td>${order.포장번호}</td>
+                            <td>${order.주문번호}</td>
+                            <td>${order.고객_고객_id}</td>
+                            <td>${order.구매수량}</td>
+                            <td>${order.처리상태}</td>
+                        `;
+                                ordersTableBody.appendChild(row);
+                            });
+                            document.getElementById('delivery-result').style.display = 'block';
+                        } else {
+                            alert('배송 기사를 찾을 수 없습니다.');
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                        alert('배송 조회 중 오류가 발생했습니다.');
+                    });
+            });
+        </script>
+    </body>
+</html>

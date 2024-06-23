@@ -1,16 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
     const dataUrl = 'http://127.0.0.1:7000/mandarineSortedInfo/'; // JSON 데이터를 가져올 API URL
-
     fetch(dataUrl)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
+        .then((response) => response.json())
         .then((data) => {
-            console.log('Fetched data:', data); // 데이터 확인용 콘솔 로그
-
             const tableBody = document.querySelector('#data-table tbody');
             tableBody.innerHTML = ''; // 테이블을 초기화합니다.
 
@@ -40,10 +32,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 // 수량 확인용 콘솔 로그 추가
                 console.log(`등급: ${key}, 수량: ${value['수량']}`);
 
-                // 드롭다운 메뉴에 수량 옵션 추가 (1부터 재고량까지)
+                // 드롭다운 메뉴에 수량 옵션 추가 (0부터 재고량까지)
                 const stockQuantity = parseInt(value['수량']);
                 if (!isNaN(stockQuantity)) {
-                    for (let i = 1; i <= stockQuantity; i++) {
+                    for (let i = 0; i <= stockQuantity; i++) {
+                        // 수정된 부분: i = 0 부터 시작
                         const option = document.createElement('option');
                         option.value = i;
                         option.textContent = i;

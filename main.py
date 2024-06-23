@@ -1,8 +1,9 @@
 from fastapi import FastAPI, HTTPException, Query, Form
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
+import random
 
 from fastapi.staticfiles import StaticFiles
 
@@ -41,6 +42,11 @@ async def home(request: Request):
 @app.get("/totalPriceSearch/")
 async def home(request: Request):
     return templates.TemplateResponse("totalPriceSearch.html",{"request":request})
+
+
+@app.get("/deliveryAssign/")
+async def deliveryAssign(request: Request):
+    return templates.TemplateResponse("deliveryAssign.html", {"request": request})
 
 import pymysql
 
@@ -221,24 +227,131 @@ async def search_orders(request: Request, customer_id: int):
 async def wrap_orders(customer_id: int = Form(...)):
     try:
         # Fetch orders for the customer
-        sql = "SELECT 주문번호, 구매수량 FROM 주문 WHERE 고객_고객_id = %s AND 처리상태 = '미처리'"
+        sql = "SELECT 주문번호 FROM 주문 WHERE 고객_고객_id = %s AND 처리상태 = '미처리'"
         cur.execute(sql, (customer_id,))
         orders = cur.fetchall()
 
-        # Insert into 포장 table without 주문번호 reference
-        for order in orders:
-            sql = "INSERT INTO 포장 (배송기사_배송기사_id) VALUES (NULL)"
-            cur.execute(sql)
+        if not orders:
+            raise HTTPException(status_code=404, detail="No orders found")
 
-        # Update 주문 table
-        sql = "UPDATE 주문 SET 처리상태 = '포장' WHERE 고객_고객_id = %s AND 처리상태 = '미처리'"
-        cur.execute(sql, (customer_id,))
+        # Insert into 포장 table and get the 포장번호
+        sql = "INSERT INTO 포장 (배송기사_배송기사_id) VALUES (NULL)"
+        cur.execute(sql)
+        packaging_id = cur.lastrowid
+
+        # Update 주문 table with 포장번호 and 처리상태
+        order_ids = [order['주문번호'] for order in orders]
+        format_strings = ','.join(['%s'] * len(order_ids))
+        sql = f"UPDATE 주문 SET 처리상태 = '포장', 포장_포장번호 = %s WHERE 주문번호 IN ({format_strings})"
+        cur.execute(sql, (packaging_id, *order_ids))
 
         conn.commit()
         return RedirectResponse(url="/", status_code=303)
     except Exception as e:
         conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))        
+        raise HTTPException(status_code=500, detail=str(e))
+
+#배송조회
+@app.get("/delivery_check/", response_class=HTMLResponse)
+async def delivery_check_form(request: Request):
+    return templates.TemplateResponse("delivery_check.html", {"request": request})
+
+@app.post("/delivery_result/", response_class=JSONResponse)
+async def delivery_result(delivery_id: int = Form(...)):
+    try:
+        # 배송기사 정보 조회
+        sql = "SELECT 기사이름, 전화번호 FROM 배송기사 WHERE 배송기사_id = %s"
+        cur.execute(sql, (delivery_id,))
+        delivery_info = cur.fetchone()
+
+        if not delivery_info:
+            raise HTTPException(status_code=404, detail="No delivery person found")
+
+        # 배송 중인 포장 및 주문 정보 조회
+        sql = """
+        SELECT 포장.포장번호, 주문.주문번호, 주문.고객_고객_id, 주문.구매수량, 주문.처리상태
+        FROM 포장
+        JOIN 주문 ON 포장.포장번호 = 주문.포장_포장번호
+        WHERE 포장.배송기사_배송기사_id = %s
+        """
+        cur.execute(sql, (delivery_id,))
+        delivery_orders = cur.fetchall()
+
+        result = {
+            "delivery_info": delivery_info,
+            "delivery_orders": delivery_orders
+        }
+
+        return JSONResponse(content=result)
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+#1. 기사현황 조회
+@app.get("/packagingInfo/", response_class=JSONResponse)
+def get_packaging():
+    cur = conn.cursor()
+    try:
+        sql = "SELECT 포장번호 FROM 포장 WHERE 배송기사_배송기사_id IS NULL"
+        cur.execute(sql)
+        rows = cur.fetchall()
+        print(rows)  # 디버깅용 출력
+        if not rows:
+            raise HTTPException(status_code=404, detail="No unassigned packages found")
+        return JSONResponse(content=rows)  # JSONResponse로 반환
+    except Exception as e:
+        print(f"Error: {e}")
+        conn.rollback()  # 에러 발생 시 롤백합니다.
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+
+@app.post("/assignDelivery/", response_class=JSONResponse)
+async def assign_delivery():
+    cur = conn.cursor()
+    try:
+        # Fetch unassigned packages
+        cur.execute("SELECT 포장번호 FROM 포장 WHERE 배송기사_배송기사_id IS NULL")
+        unassigned_packages = cur.fetchall()
+        
+        if not unassigned_packages:
+            raise HTTPException(status_code=404, detail="No unassigned packages found")
+
+        print(f"Unassigned Packages: {unassigned_packages}")  # 디버깅 출력
+
+        # Fetch available delivery persons
+        cur.execute("SELECT 배송기사_id FROM 배송기사 WHERE 업무상태 IS NULL")
+        available_drivers = cur.fetchall()
+
+        if not available_drivers:
+            raise HTTPException(status_code=404, detail="No available delivery drivers found")
+
+        print(f"Available Drivers: {available_drivers}")  # 디버깅 출력
+
+        unassigned_packages = [pkg['포장번호'] for pkg in unassigned_packages]
+        available_drivers = [drv['배송기사_id'] for drv in available_drivers]
+
+        # Assign drivers to packages
+        assignments = []
+        for package in unassigned_packages:
+            if available_drivers:
+                driver = available_drivers.pop(0)
+                assignments.append({"driver_id": driver, "package_id": package})
+                # Update 포장 table
+                cur.execute("UPDATE 포장 SET 배송기사_배송기사_id = %s WHERE 포장번호 = %s", (driver, package))
+                # Update 주문 table
+                cur.execute("UPDATE 주문 SET 처리상태 = '배정완료' WHERE 포장_포장번호 = %s", (package,))
+                # Update the delivery person's status
+                cur.execute("UPDATE 배송기사 SET 업무상태 = '배정완료' WHERE 배송기사_id = %s", (driver,))
+            else:
+                break
+
+        conn.commit()
+        
+        return JSONResponse(content={"message": "Delivery drivers assigned successfully", "assignments": assignments})
+    except Exception as e:
+        print(f"Error: {e}")
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+                        
 def classify_fruit(당도, 무게, 착색비율):
     당도 = int(당도)
     무게 = int(무게)
