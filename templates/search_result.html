@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Search Result</title>
+    </head>
+    <body>
+        <h1>Search Result for Customer ID: {{ customer_id }}</h1>
+        <table border="1">
+            <tr>
+                <th>주문번호</th>
+                <th>구매수량</th>
+                <th>고객 ID</th>
+                <th>처리상태</th>
+            </tr>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.주문번호 }}</td>
+                <td>{{ order.구매수량 }}</td>
+                <td>{{ order.고객_고객_id }}</td>
+                <td>{{ order.처리상태 }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <form action="/wraporders/" method="post">
+            <input type="hidden" name="customer_id" value="{{ customer_id }}" />
+            <button type="submit">Wrap Orders</button>
+        </form>
+    </body>
+</html>

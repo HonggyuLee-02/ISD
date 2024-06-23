@@ -1,8 +1,16 @@
 document.addEventListener('DOMContentLoaded', function () {
     const dataUrl = 'http://127.0.0.1:7000/mandarineSortedInfo/'; // JSON 데이터를 가져올 API URL
+
     fetch(dataUrl)
-        .then((response) => response.json())
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then((data) => {
+            console.log('Fetched data:', data); // 데이터 확인용 콘솔 로그
+
             const tableBody = document.querySelector('#data-table tbody');
             tableBody.innerHTML = ''; // 테이블을 초기화합니다.
 
@@ -22,17 +30,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 row.appendChild(priceCell);
 
                 const quantityCell = document.createElement('td');
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
 
                 const select = document.createElement('select');
                 select.name = `quantity_${key}`; // 각 등급별로 구분된 이름을 가짐
                 select.className = 'form-control';
 
+                // 수량 확인용 콘솔 로그 추가
+                console.log(`등급: ${key}, 수량: ${value['수량']}`);
+
                 // 드롭다운 메뉴에 수량 옵션 추가 (1부터 재고량까지)
-                for (let i = 1; i <= parseInt(value['수량']); i++) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    option.textContent = i;
-                    select.appendChild(option);
+                const stockQuantity = parseInt(value['수량']);
+                if (!isNaN(stockQuantity)) {
+                    for (let i = 1; i <= stockQuantity; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i;
+                        select.appendChild(option);
+                    }
+                } else {
+                    console.error(`Invalid stock quantity for grade ${key}: ${value['수량']}`);
                 }
 
                 const gradeInput = document.createElement('input');
@@ -40,8 +58,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 gradeInput.name = `grade_${key}`;
                 gradeInput.value = key;
 
-                quantityCell.appendChild(select);
-                quantityCell.appendChild(gradeInput);
+                formGroup.appendChild(select);
+                formGroup.appendChild(gradeInput);
+                quantityCell.appendChild(formGroup);
                 row.appendChild(quantityCell);
 
                 tableBody.appendChild(row);

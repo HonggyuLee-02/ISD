@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query, Form
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
 from fastapi.staticfiles import StaticFiles
@@ -141,7 +141,7 @@ async def order_info(request: Request):
                 cur.execute(sql, (quantity, grade, customer_id))
         
         conn.commit()
-        return {"message": "Order successfully placed"}
+        return RedirectResponse(url="/", status_code=303)
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
@@ -198,7 +198,47 @@ def get_order_history():
     except Exception as e:
         conn.rollback()  # 에러 발생 시 롤백합니다.
         raise HTTPException(status_code=500, detail=str(e))
-    
+        
+### 포장 ###
+#미처리인 상태인 고객 ID를 풀링해서 하나의 포장번호를 부여
+# 1. 고객 ID에 대하여 미처리 상태인 주문을 조회
+@app.get("/input_id/", response_class=HTMLResponse)
+async def input_id_form(request: Request):
+    return templates.TemplateResponse("input_id.html", {"request": request})
+#2. 검색
+@app.get("/searchorders/", response_class=HTMLResponse)
+async def search_orders(request: Request, customer_id: int):
+    try:
+        sql = "SELECT 주문번호, 구매수량, 고객_고객_id, 처리상태 FROM 주문 WHERE 고객_고객_id = %s"
+        cur.execute(sql, (customer_id,))
+        orders = cur.fetchall()
+        return templates.TemplateResponse("search_result.html", {"request": request, "orders": orders, "customer_id": customer_id})
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+#3. 포장
+@app.post("/wraporders/")
+async def wrap_orders(customer_id: int = Form(...)):
+    try:
+        # Fetch orders for the customer
+        sql = "SELECT 주문번호, 구매수량 FROM 주문 WHERE 고객_고객_id = %s AND 처리상태 = '미처리'"
+        cur.execute(sql, (customer_id,))
+        orders = cur.fetchall()
+
+        # Insert into 포장 table without 주문번호 reference
+        for order in orders:
+            sql = "INSERT INTO 포장 (배송기사_배송기사_id) VALUES (NULL)"
+            cur.execute(sql)
+
+        # Update 주문 table
+        sql = "UPDATE 주문 SET 처리상태 = '포장' WHERE 고객_고객_id = %s AND 처리상태 = '미처리'"
+        cur.execute(sql, (customer_id,))
+
+        conn.commit()
+        return RedirectResponse(url="/", status_code=303)
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))        
 def classify_fruit(당도, 무게, 착색비율):
     당도 = int(당도)
     무게 = int(무게)
